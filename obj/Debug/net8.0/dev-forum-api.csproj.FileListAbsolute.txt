@@ -96,6 +96,7 @@ C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.Assembly
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.csproj.CoreCompileInputs.cache
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.sourcelink.json
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\scopedcss\bundle\dev-forum-api.styles.css
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\staticwebassets.development.json

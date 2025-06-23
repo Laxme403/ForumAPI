@@ -74,5 +74,14 @@ namespace dev_forum_api.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] User user)
+        {
+            Console.WriteLine($"Register endpoint hit: {user.Username}, {user.Email}");
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User registered successfully" });
+        }
     }
 }

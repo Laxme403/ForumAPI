@@ -13,8 +13,14 @@ namespace dev_forum_api.Models
         // Foreign key
         public int UserId { get; set; }
 
-        public User Author { get; set; } = null!;
+        public string Author { get; set; } // or a User object if you want to expand
 
-        public List<Reply> Replies { get; set; } = new List<Reply>();
+        public int Likes { get; set; }
+
+        public int Dislikes { get; set; }
+
+        public string Tags { get; set; } // comma-separated, or use a related table
+
+        public int Replies { get; set; } // for count only
     }
 }
