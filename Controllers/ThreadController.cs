@@ -1,162 +1,114 @@
 using Microsoft.AspNetCore.Mvc;
 using dev_forum_api.Models;
-using dev_forum_api.Data;
-using Microsoft.EntityFrameworkCore;
+using dev_forum_api.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace dev_forum_api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class ThreadsController : ControllerBase
+    [Route("api/threads")]
+    public class ThreadController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IThreadRepository _repo;
 
-        public ThreadsController(AppDbContext context)
+        public ThreadController(IThreadRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
-        // GET: api/threads
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetAllThreads()
+        public async Task<ActionResult<IEnumerable<ThreadDto>>> GetThreads()
         {
-            // Step 1: Fetch tags as string
-            var threads = await _context.Threads
-                .Select(t => new {
-                    id = t.Id,
-                    title = t.Title,
-                    description = t.Description,
-                    userId = t.UserId,
-                    author = t.Author,
-                    likes = t.Likes,
-                    dislikes = t.Dislikes,
-                    tags = t.Tags, // just as string
-                    replies = _context.Replies.Count(r => r.ThreadId == t.Id)
-                })
-                .ToListAsync();
-
-            // Step 2: Split tags in memory
-            var result = threads.Select(t => new {
-                t.id,
-                t.title,
-                t.description,
-                t.userId,
-                t.author,
-                t.likes,
-                t.dislikes,
-                tags = string.IsNullOrEmpty(t.tags)
-                    ? new string[0]
-                    : t.tags.Split(',').Select(tag => tag.Trim()).ToArray(),
-                t.replies
+            var threads = await _repo.GetAllAsync();
+            var threadDtos = threads.Select(t => new ThreadDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                UserId = t.UserId,
+                Author = t.Author,
+                Likes = t.Likes,
+                Dislikes = t.Dislikes,
+                Tags = t.Tags,
+                Replies = t.Replies
             });
-
-            return Ok(result);
+            return Ok(threadDtos);
         }
 
-        // GET: api/threads/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetThreadById(int id)
+        public async Task<ActionResult<ThreadDto>> GetThread(int id)
         {
-            var thread = await _context.Threads
-                .FirstOrDefaultAsync(t => t.Id == id);
+            var thread = await _repo.GetByIdAsync(id);
+            if (thread == null) return NotFound();
+            var threadDto = new ThreadDto
+            {
+                Id = thread.Id,
+                Title = thread.Title,
+                Description = thread.Description,
+                UserId = thread.UserId,
+                Author = thread.Author,
+                Likes = thread.Likes,
+                Dislikes = thread.Dislikes,
+                Tags = thread.Tags,
+                Replies = thread.Replies
+            };
+            return Ok(threadDto);
+        }
 
+        [HttpPost]
+        public async Task<ActionResult<ThreadDto>> CreateThread([FromBody] ThreadCreateDto dto)
+        {
+            var thread = new ForumThread
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                UserId = dto.UserId,
+                Author = dto.Author,
+                Tags = dto.Tags,
+                Likes = 0,
+                Dislikes = 0,
+                Replies = 0
+            };
+            var created = await _repo.AddAsync(thread);
+            var threadDto = new ThreadDto
+            {
+                Id = created.Id,
+                Title = created.Title,
+                Description = created.Description,
+                UserId = created.UserId,
+                Author = created.Author,
+                Likes = created.Likes,
+                Dislikes = created.Dislikes,
+                Tags = created.Tags,
+                Replies = created.Replies
+            };
+            return CreatedAtAction(nameof(GetThread), new { id = created.Id }, threadDto);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateThread(int id, ThreadCreateDto dto)
+        {
+            var thread = await _repo.GetByIdAsync(id);
             if (thread == null) return NotFound();
 
-            // Fetch the user (author) from Users table
-            var user = await _context.Users.FindAsync(thread.UserId);
+            thread.Title = dto.Title;
+            thread.Description = dto.Description;
+            thread.UserId = dto.UserId;
+            thread.Author = dto.Author;
+            thread.Tags = dto.Tags;
+            // Likes, Dislikes, Replies can be updated separately if needed
 
-            // Fetch all replies for this thread, including author info
-            var replies = await _context.Replies
-                .Where(r => r.ThreadId == thread.Id)
-                .Select(r => new {
-                    id = r.Id,
-                    content = r.Content,
-                    userId = r.UserId,
-                    threadid = r.ThreadId,
-                    author = r.Author// Only the username as a string
-                })
-                .ToListAsync();
-
-            return Ok(new {
-                id = thread.Id,
-                title = thread.Title,
-                description = thread.Description,
-                userId = thread.UserId,
-                author = user == null ? null : new { id = user.Id, username = user.Username },
-                replies = replies, // full list of replies
-                tags = thread.Tags?.Split(',').Select(t => t.Trim()).ToArray() ?? new string[0],
-                likes = thread.Likes,
-                dislikes = thread.Dislikes
-            });
-        }
-
-        // POST: api/threads
-        [HttpPost]
-        public async Task<ActionResult<ForumThread>> CreateThread([FromBody] ForumThread newThread)
-        {
-            _context.Threads.Add(newThread);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetThreadById), new { id = newThread.Id }, newThread);
-        }
-
-        // PUT: api/threads/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateThread(int id, [FromBody] ForumThread updatedThread)
-        {
-            if (id != updatedThread.Id)
-                return BadRequest();
-
-            _context.Entry(updatedThread).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Threads.Any(t => t.Id == id))
-                    return NotFound();
-                else
-                    throw;
-            }
-
+            await _repo.UpdateAsync(thread);
             return NoContent();
         }
 
-        // DELETE: api/threads/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteThread(int id)
         {
-            var thread = await _context.Threads.FindAsync(id);
-            if (thread == null)
-                return NotFound();
-
-            _context.Threads.Remove(thread);
-            await _context.SaveChangesAsync();
-
+            await _repo.DeleteAsync(id);
             return NoContent();
-        }
-
-        [HttpPost("{id}/like")]
-        public async Task<IActionResult> LikeThread(int id)
-        {
-            var thread = await _context.Threads.FindAsync(id);
-            if (thread == null) return NotFound();
-
-            thread.Likes++;
-            await _context.SaveChangesAsync();
-            return Ok(thread.Likes);
-        }
-
-        [HttpPost("{id}/dislike")]
-        public async Task<IActionResult> DislikeThread(int id)
-        {
-            var thread = await _context.Threads.FindAsync(id);
-            if (thread == null) return NotFound();
-
-            thread.Dislikes++;
-            await _context.SaveChangesAsync();
-            return Ok(thread.Dislikes);
         }
     }
 }

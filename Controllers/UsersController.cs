@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using dev_forum_api.Models;
-using dev_forum_api.Data;
-using Microsoft.EntityFrameworkCore;
+using dev_forum_api.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace dev_forum_api.Controllers
 {
@@ -9,56 +11,74 @@ namespace dev_forum_api.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IUserRepository _repo;
 
-        public UsersController(AppDbContext context)
+        public UsersController(IUserRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         // GET: api/users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _repo.GetAllAsync();
+            var userDtos = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                Email = u.Email
+            });
+            return Ok(userDtos);
         }
 
         // GET: api/users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserDto>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _repo.GetByIdAsync(id);
             if (user == null) return NotFound();
-            return user;
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email
+            };
+            return Ok(userDto);
         }
 
-        // POST: api/users
-        [HttpPost]
-        public async Task<ActionResult<User>> CreateUser(User user)
+        // POST: api/users/register
+        [HttpPost("register")]
+        public async Task<ActionResult<UserDto>> Register([FromBody] UserRegisterDto dto)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+            var user = new User
+            {
+                Username = dto.Username,
+                Email = dto.Email,
+                Password = dto.Password
+            };
+            var created = await _repo.AddAsync(user);
+            var userDto = new UserDto
+            {
+                Id = created.Id,
+                Username = created.Username,
+                Email = created.Email
+            };
+            return CreatedAtAction(nameof(GetUser), new { id = created.Id }, userDto);
         }
 
         // PUT: api/users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, User user)
+        public async Task<IActionResult> UpdateUser(int id, UserRegisterDto dto)
         {
-            if (id != user.Id) return BadRequest();
+            var user = await _repo.GetByIdAsync(id);
+            if (user == null) return NotFound();
 
-            _context.Entry(user).State = EntityState.Modified;
+            user.Username = dto.Username;
+            user.Email = dto.Email;
+            user.Password = dto.Password;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Users.Any(e => e.Id == id)) return NotFound();
-                else throw;
-            }
-
+            await _repo.UpdateAsync(user);
             return NoContent();
         }
 
@@ -66,21 +86,8 @@ namespace dev_forum_api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
+            await _repo.DeleteAsync(id);
             return NoContent();
-        }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] User user)
-        {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return Ok(new { id = user.Id, username = user.Username });
         }
     }
 }

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using dev_forum_api.Data;
 using Microsoft.OpenApi.Models;
+using dev_forum_api.Interfaces;
+using dev_forum_api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,9 @@ builder.Services.AddCors(options =>
                         .AllowAnyHeader()
                         .AllowAnyMethod());
 });
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IThreadRepository, ThreadRepository>();
 
 var app = builder.Build();
 
