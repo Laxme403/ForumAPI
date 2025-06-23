@@ -39,7 +39,10 @@ if (app.Environment.IsDevelopment())
 // Uncomment if you want to use HTTPS redirection
 // app.UseHttpsRedirection();
 
-app.UseCors("AllowAngularDevClient"); // Enable CORS for Angular frontend
+app.UseCors(builder =>
+    builder.AllowAnyOrigin()
+           .AllowAnyMethod()
+           .AllowAnyHeader());
 app.UseAuthorization();
 
 app.MapControllers();
