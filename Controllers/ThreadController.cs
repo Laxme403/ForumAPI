@@ -136,5 +136,27 @@ namespace dev_forum_api.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("{id}/like")]
+        public async Task<IActionResult> LikeThread(int id)
+        {
+            var thread = await _context.Threads.FindAsync(id);
+            if (thread == null) return NotFound();
+
+            thread.Likes++;
+            await _context.SaveChangesAsync();
+            return Ok(thread.Likes);
+        }
+
+        [HttpPost("{id}/dislike")]
+        public async Task<IActionResult> DislikeThread(int id)
+        {
+            var thread = await _context.Threads.FindAsync(id);
+            if (thread == null) return NotFound();
+
+            thread.Dislikes++;
+            await _context.SaveChangesAsync();
+            return Ok(thread.Dislikes);
+        }
     }
 }
