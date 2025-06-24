@@ -1,84 +1,68 @@
 using Microsoft.AspNetCore.Mvc;
+using dev_forum_api.Interfaces;
+using dev_forum_api.DTOs;
 using dev_forum_api.Models;
-using dev_forum_api.Data;
-using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace dev_forum_api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/replies")]
     public class RepliesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IReplyRepository _repo;
 
-        public RepliesController(AppDbContext context)
+        public RepliesController(IReplyRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         // GET: api/replies
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Reply>>> GetReplies()
         {
-            return await _context.Replies.ToListAsync();
+            var replies = await _repo.GetAllAsync();
+            return Ok(replies);
         }
 
-        // GET: api/replies/thread/3 (get replies by thread id)
+        // Get all replies for a thread as DTOs (with author names)
         [HttpGet("thread/{threadId}")]
-        public async Task<ActionResult<IEnumerable<Reply>>> GetRepliesForThread(int threadId)
+        public async Task<ActionResult<IEnumerable<ReplyDto>>> GetRepliesForThread(int threadId)
         {
-            return await _context.Replies.Where(r => r.ThreadId == threadId).ToListAsync();
+            var replies = await _repo.GetDtosByThreadIdAsync(threadId);
+            return Ok(replies);
         }
 
         // GET: api/replies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Reply>> GetReply(int id)
         {
-            var reply = await _context.Replies.FindAsync(id);
+            var replies = await _repo.GetAllAsync();
+            var reply = replies.FirstOrDefault(r => r.Id == id);
             if (reply == null) return NotFound();
-            return reply;
+            return Ok(reply);
         }
 
-        // POST: api/replies
+        // Add a reply
         [HttpPost]
-        public async Task<ActionResult<Reply>> CreateReply(Reply reply)
+        public async Task<ActionResult<Reply>> CreateReply([FromBody] ReplyCreateDto dto)
         {
-            _context.Replies.Add(reply);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetReply), new { id = reply.Id }, reply);
+            var reply = new Reply
+            {
+                Content = dto.Content,
+                ThreadId = dto.ThreadId,
+                UserId = dto.UserId
+            };
+            var created = await _repo.AddAsync(reply);
+            return CreatedAtAction(nameof(GetRepliesForThread), new { threadId = created.ThreadId }, created);
         }
 
-        // PUT: api/replies/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateReply(int id, Reply reply)
-        {
-            if (id != reply.Id) return BadRequest();
-
-            _context.Entry(reply).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Replies.Any(e => e.Id == id)) return NotFound();
-                else throw;
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/replies/5
+        // Optionally: Delete a reply
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReply(int id)
         {
-            var reply = await _context.Replies.FindAsync(id);
-            if (reply == null) return NotFound();
-
-            _context.Replies.Remove(reply);
-            await _context.SaveChangesAsync();
-
+            await _repo.DeleteAsync(id);
             return NoContent();
         }
     }

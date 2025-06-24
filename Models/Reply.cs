@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace dev_forum_api.Models
 {
@@ -6,13 +7,21 @@ namespace dev_forum_api.Models
     {
         public int Id { get; set; }
 
+        [Required]
         public string Content { get; set; } = string.Empty;
 
-        // Foreign keys
+        [Required]
         public int ThreadId { get; set; }
-        public ForumThread Thread { get; set; } = null!;
 
+        [Required]
         public int UserId { get; set; }
-        public User Author { get; set; } = null!;
-    }
-}
+
+        [JsonIgnore]
+        public User? Author { get; set; }
+
+        [JsonIgnore]
+        public ForumThread? Thread { get; set; }
+    }    }
+
+
+
