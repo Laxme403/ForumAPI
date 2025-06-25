@@ -128,12 +128,11 @@ namespace dev_forum_api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login([FromBody] UserLoginDto dto)
         {
-            var users = await _repo.GetAllAsync();
-            var user = users.FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password); // Hash check in production!
+            var user = (await _repo.GetAllAsync())
+                .FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
             if (user == null)
-            {
-                return Unauthorized("Invalid credentials");
-            }
+                return Unauthorized(new { message = "Invalid credentials" });
+
             var userDto = new UserDto
             {
                 Id = user.Id,
