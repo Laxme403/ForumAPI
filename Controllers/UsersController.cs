@@ -47,24 +47,58 @@ namespace dev_forum_api.Controllers
             return Ok(userDto);
         }
 
+        // GET: api/users/by-username/{username}
+        [HttpGet("by-username/{username}")]
+        public async Task<ActionResult<UserDto>> GetUserByUsername(string username)
+        {
+            var user = await _repo.GetByUsernameAsync(username);
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email
+            };
+            return Ok(userDto);
+        }
+
         // POST: api/users/register
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register([FromBody] UserRegisterDto dto)
         {
+            // Check if user already exists by email or username
+            var existingUser = (await _repo.GetAllAsync())
+                .FirstOrDefault(u => u.Email == dto.Email || u.Username == dto.Username);
+
+            if (existingUser != null)
+            {
+                // Return the existing user's info (or an error if you prefer)
+                var userDto = new UserDto
+                {
+                    Id = existingUser.Id,
+                    Username = existingUser.Username,
+                    Email = existingUser.Email
+                };
+                return Ok(userDto); // Or: return BadRequest("User already exists");
+            }
+
+            // Create new user if not exists
             var user = new User
             {
                 Username = dto.Username,
                 Email = dto.Email,
-                Password = dto.Password
+                Password = dto.Password // You should hash this in production!
             };
             var created = await _repo.AddAsync(user);
-            var userDto = new UserDto
+            var createdDto = new UserDto
             {
                 Id = created.Id,
                 Username = created.Username,
                 Email = created.Email
             };
-            return CreatedAtAction(nameof(GetUser), new { id = created.Id }, userDto);
+            return CreatedAtAction(nameof(GetUser), new { id = created.Id }, createdDto);
         }
 
         // PUT: api/users/5
@@ -88,6 +122,25 @@ namespace dev_forum_api.Controllers
         {
             await _repo.DeleteAsync(id);
             return NoContent();
+        }
+
+        // POST: api/users/login
+        [HttpPost("login")]
+        public async Task<ActionResult<UserDto>> Login([FromBody] UserLoginDto dto)
+        {
+            var users = await _repo.GetAllAsync();
+            var user = users.FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password); // Hash check in production!
+            if (user == null)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email
+            };
+            return Ok(userDto);
         }
     }
 }

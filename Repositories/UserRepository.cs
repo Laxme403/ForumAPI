@@ -48,5 +48,10 @@ namespace dev_forum_api.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<User> GetByUsernameAsync(string username)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        }
     }
 }

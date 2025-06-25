@@ -8,6 +8,7 @@ namespace dev_forum_api.Interfaces
     {
         Task<IEnumerable<User>> GetAllAsync();
         Task<User> GetByIdAsync(int id);
+        Task<User> GetByUsernameAsync(string username); // <-- Add this
         Task<User> AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(int id);
