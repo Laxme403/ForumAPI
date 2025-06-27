@@ -22,5 +22,7 @@ namespace dev_forum_api.Models
         public string Tags { get; set; } // comma-separated, or use a related table
 
         public int Replies { get; set; } // for count only
+
+        public int deleteindex { get; set; } = 0; // 0 = active, 1 = deleted
     }
 }

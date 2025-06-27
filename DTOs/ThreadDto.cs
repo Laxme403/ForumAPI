@@ -11,5 +11,6 @@ namespace dev_forum_api.Models
         public int Dislikes { get; set; }
         public string Tags { get; set; }
         public int Replies { get; set; }
+        public int deleteindex { get; set; } // <-- Add this line
     }
 }

@@ -22,18 +22,21 @@ namespace dev_forum_api.Controllers
         public async Task<ActionResult<IEnumerable<ThreadDto>>> GetThreads()
         {
             var threads = await _repo.GetAllAsync();
-            var threadDtos = threads.Select(t => new ThreadDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                UserId = t.UserId,
-                Author = t.Author,
-                Likes = t.Likes,
-                Dislikes = t.Dislikes,
-                Tags = t.Tags,
-                Replies = t.Replies
-            });
+            var threadDtos = threads
+                .Where(t => t.deleteindex == 0) // <-- Only active threads
+                .Select(t => new ThreadDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    UserId = t.UserId,
+                    Author = t.Author,
+                    Likes = t.Likes,
+                    Dislikes = t.Dislikes,
+                    Tags = t.Tags,
+                    Replies = t.Replies,
+                    deleteindex = t.deleteindex // <-- Add this if not present
+                });
             return Ok(threadDtos);
         }
 
@@ -69,7 +72,8 @@ namespace dev_forum_api.Controllers
                 Tags = dto.Tags,
                 Likes = 0,
                 Dislikes = 0,
-                Replies = 0
+                Replies = 0,
+                deleteindex = 0 // <-- Ensure soft delete is set to active by default
             };
             var created = await _repo.AddAsync(thread);
             var threadDto = new ThreadDto
@@ -82,7 +86,8 @@ namespace dev_forum_api.Controllers
                 Likes = created.Likes,
                 Dislikes = created.Dislikes,
                 Tags = created.Tags,
-                Replies = created.Replies
+                Replies = created.Replies,
+                deleteindex = created.deleteindex // <-- Add this if not present
             };
             return CreatedAtAction(nameof(GetThread), new { id = created.Id }, threadDto);
         }
@@ -108,6 +113,17 @@ namespace dev_forum_api.Controllers
         public async Task<IActionResult> DeleteThread(int id)
         {
             await _repo.DeleteAsync(id);
+            return NoContent();
+        }
+
+        [HttpPut("{id}/soft-delete")]
+        public async Task<IActionResult> SoftDeleteThread(int id, [FromBody] ThreadDto dto)
+        {
+            var thread = await _repo.GetByIdAsync(id);
+            if (thread == null) return NotFound();
+
+            thread.deleteindex = dto.deleteindex;
+            await _repo.UpdateAsync(thread);
             return NoContent();
         }
     }

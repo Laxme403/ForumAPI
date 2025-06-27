@@ -8,5 +8,6 @@ namespace dev_forum_api.Models
         public string Author { get; set; }
         public string Tags { get; set; }
         // Likes, Dislikes, Replies are usually set to 0 on creation
+        public int deleteindex { get; set; } = 0;
     }
 }
