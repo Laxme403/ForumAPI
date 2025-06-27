@@ -129,7 +129,10 @@ namespace dev_forum_api.Controllers
         public async Task<ActionResult<UserDto>> Login([FromBody] UserLoginDto dto)
         {
             var user = (await _repo.GetAllAsync())
-                .FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
+                .FirstOrDefault(u =>
+                    u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase) && // case-insensitive email
+                    u.Password == dto.Password); // password remains case-sensitive
+
             if (user == null)
                 return Unauthorized(new { message = "Invalid credentials" });
 
