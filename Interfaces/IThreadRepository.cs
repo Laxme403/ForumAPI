@@ -11,5 +11,11 @@ namespace dev_forum_api.Interfaces
         Task<ForumThread> AddAsync(ForumThread thread);
         Task UpdateAsync(ForumThread thread);
         Task DeleteAsync(int id);
+
+        // Add these methods:
+        Task<List<ForumThread>> GetThreadsLikedByUser(int userId);
+        Task<List<ForumThread>> GetThreadsDislikedByUser(int userId);
+        Task<(int likes, int dislikes)> LikeThread(int threadId, int userId);
+        Task<(int likes, int dislikes)> DislikeThread(int threadId, int userId);
     }
 }

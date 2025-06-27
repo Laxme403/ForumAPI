@@ -35,7 +35,8 @@ namespace dev_forum_api.Controllers
                     Dislikes = t.Dislikes,
                     Tags = t.Tags,
                     Replies = t.Replies,
-                    deleteindex = t.deleteindex // <-- Add this if not present
+                    deleteindex = t.deleteindex, // <-- Add this if not present
+                    CreatedAt = t.CreatedAt
                 });
             return Ok(threadDtos);
         }
@@ -73,7 +74,8 @@ namespace dev_forum_api.Controllers
                 Likes = 0,
                 Dislikes = 0,
                 Replies = 0,
-                deleteindex = 0 // <-- Ensure soft delete is set to active by default
+                deleteindex = 0, // <-- Ensure soft delete is set to active by default
+                CreatedAt = DateTime.UtcNow // <-- Set the creation date
             };
             var created = await _repo.AddAsync(thread);
             var threadDto = new ThreadDto
@@ -125,6 +127,61 @@ namespace dev_forum_api.Controllers
             thread.deleteindex = dto.deleteindex;
             await _repo.UpdateAsync(thread);
             return NoContent();
+        }
+
+        [HttpGet("liked/{userId}")]
+        public async Task<ActionResult<IEnumerable<ThreadDto>>> GetThreadsLikedByUser(int userId)
+        {
+            var threads = await _repo.GetThreadsLikedByUser(userId);
+            var threadDtos = threads.Select(t => new ThreadDto {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                UserId = t.UserId,
+                Author = t.Author,
+                Likes = t.Likes,
+                Dislikes = t.Dislikes,
+                Tags = t.Tags,
+                Replies = t.Replies,
+                deleteindex = t.deleteindex,
+                CreatedAt = t.CreatedAt
+            });
+            return Ok(threadDtos);
+        }
+
+        [HttpGet("disliked/{userId}")]
+        public async Task<ActionResult<IEnumerable<ThreadDto>>> GetThreadsDislikedByUser(int userId)
+        {
+            var threads = await _repo.GetThreadsDislikedByUser(userId);
+            var threadDtos = threads.Select(t => new ThreadDto {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                UserId = t.UserId,
+                Author = t.Author,
+                Likes = t.Likes,
+                Dislikes = t.Dislikes,
+                Tags = t.Tags,
+                Replies = t.Replies,
+                deleteindex = t.deleteindex,
+                CreatedAt = t.CreatedAt
+            });
+            return Ok(threadDtos);
+        }
+
+        [HttpPost("{threadId}/like")]
+        public async Task<IActionResult> LikeThread(int threadId, [FromBody] dynamic body)
+        {
+            int userId = (int)body.userId;
+            var (likes, dislikes) = await _repo.LikeThread(threadId, userId);
+            return Ok(new { likes, dislikes });
+        }
+
+        [HttpPost("{threadId}/dislike")]
+        public async Task<IActionResult> DislikeThread(int threadId, [FromBody] int userId)
+        {
+            var (likes, dislikes) = await _repo.DislikeThread(threadId, userId);
+            return Ok(new { likes, dislikes });
         }
     }
 }

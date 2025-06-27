@@ -61,7 +61,7 @@ namespace dev_forum_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Threads");
+                    b.ToTable("Threads", (string)null);
                 });
 
             modelBuilder.Entity("dev_forum_api.Models.Reply", b =>
@@ -88,7 +88,7 @@ namespace dev_forum_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Replies");
+                    b.ToTable("Replies", (string)null);
                 });
 
             modelBuilder.Entity("dev_forum_api.Models.User", b =>
@@ -113,7 +113,7 @@ namespace dev_forum_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("dev_forum_api.Models.ForumThread", b =>

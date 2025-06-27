@@ -12,5 +12,6 @@ namespace dev_forum_api.Models
         public string Tags { get; set; }
         public int Replies { get; set; }
         public int deleteindex { get; set; } // <-- Add this line
+        public DateTime CreatedAt { get; set; }
     }
 }

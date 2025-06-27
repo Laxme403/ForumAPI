@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 
 namespace dev_forum_api.Models
 {
@@ -24,5 +25,7 @@ namespace dev_forum_api.Models
         public int Replies { get; set; } // for count only
 
         public int deleteindex { get; set; } = 0; // 0 = active, 1 = deleted
+
+        public DateTime CreatedAt { get; set; }
     }
 }
