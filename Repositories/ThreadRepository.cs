@@ -76,54 +76,71 @@ namespace dev_forum_api.Repositories
 
         public async Task<(int likes, int dislikes)> LikeThread(int threadId, int userId)
         {
-            // Remove any existing dislike
-            var existingDislike = await _context.ThreadDislikes
-                .FirstOrDefaultAsync(d => d.ThreadId == threadId && d.UserId == userId);
-            if (existingDislike != null)
-                _context.ThreadDislikes.Remove(existingDislike);
-
-            // Add like if not already liked
-            var alreadyLiked = await _context.ThreadLikes
-                .AnyAsync(l => l.ThreadId == threadId && l.UserId == userId);
-            if (!alreadyLiked)
-                _context.ThreadLikes.Add(new ThreadLike { ThreadId = threadId, UserId = userId });
-
-            // Update thread counts
-            var thread = await _context.Threads.FindAsync(threadId);
-            if (thread != null)
+            try
             {
+                var thread = await _context.Threads.FindAsync(threadId);
+                if (thread == null)
+                    throw new Exception("Thread not found");
+
+                // Remove any existing dislike
+                var existingDislike = await _context.ThreadDislikes
+                    .FirstOrDefaultAsync(d => d.ThreadId == threadId && d.UserId == userId);
+                if (existingDislike != null)
+                    _context.ThreadDislikes.Remove(existingDislike);
+
+                // Add like if not already liked
+                var alreadyLiked = await _context.ThreadLikes
+                    .AnyAsync(l => l.ThreadId == threadId && l.UserId == userId);
+                if (!alreadyLiked)
+                    _context.ThreadLikes.Add(new ThreadLike { ThreadId = threadId, UserId = userId });
+
+                await _context.SaveChangesAsync();
+
                 thread.Likes = await _context.ThreadLikes.CountAsync(l => l.ThreadId == threadId);
                 thread.Dislikes = await _context.ThreadDislikes.CountAsync(d => d.ThreadId == threadId);
-            }
+                await _context.SaveChangesAsync();
 
-            await _context.SaveChangesAsync();
-            return (thread?.Likes ?? 0, thread?.Dislikes ?? 0);
+                return (thread.Likes, thread.Dislikes);
+            }
+            catch (Exception ex)
+            {
+                // Log ex.ToString() or ex.Message
+                throw;
+            }
         }
 
         public async Task<(int likes, int dislikes)> DislikeThread(int threadId, int userId)
         {
-            // Remove any existing like
-            var existingLike = await _context.ThreadLikes
-                .FirstOrDefaultAsync(l => l.ThreadId == threadId && l.UserId == userId);
-            if (existingLike != null)
-                _context.ThreadLikes.Remove(existingLike);
-
-            // Add dislike if not already disliked
-            var alreadyDisliked = await _context.ThreadDislikes
-                .AnyAsync(d => d.ThreadId == threadId && d.UserId == userId);
-            if (!alreadyDisliked)
-                _context.ThreadDislikes.Add(new ThreadDislike { ThreadId = threadId, UserId = userId });
-
-            // Update thread counts
-            var thread = await _context.Threads.FindAsync(threadId);
-            if (thread != null)
+            try
             {
-                thread.Likes = await _context.ThreadLikes.CountAsync(l => l.ThreadId == threadId);
-                thread.Dislikes = await _context.ThreadDislikes.CountAsync(d => d.ThreadId == threadId);
-            }
+                // Remove any existing like
+                var existingLike = await _context.ThreadLikes
+                    .FirstOrDefaultAsync(l => l.ThreadId == threadId && l.UserId == userId);
+                if (existingLike != null)
+                    _context.ThreadLikes.Remove(existingLike);
 
-            await _context.SaveChangesAsync();
-            return (thread?.Likes ?? 0, thread?.Dislikes ?? 0);
+                // Add dislike if not already disliked
+                var alreadyDisliked = await _context.ThreadDislikes
+                    .AnyAsync(d => d.ThreadId == threadId && d.UserId == userId);
+                if (!alreadyDisliked)
+                    _context.ThreadDislikes.Add(new ThreadDislike { ThreadId = threadId, UserId = userId });
+
+                // Update thread counts
+                var thread = await _context.Threads.FindAsync(threadId);
+                if (thread != null)
+                {
+                    thread.Likes = await _context.ThreadLikes.CountAsync(l => l.ThreadId == threadId);
+                    thread.Dislikes = await _context.ThreadDislikes.CountAsync(d => d.ThreadId == threadId);
+                }
+
+                await _context.SaveChangesAsync();
+                return (thread?.Likes ?? 0, thread?.Dislikes ?? 0);
+            }
+            catch (Exception ex)
+            {
+                // Log ex.ToString() or ex.Message
+                throw;
+            }
         }
     }
 }

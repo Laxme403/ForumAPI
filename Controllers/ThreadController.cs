@@ -23,7 +23,7 @@ namespace dev_forum_api.Controllers
         {
             var threads = await _repo.GetAllAsync();
             var threadDtos = threads
-                .Where(t => t.deleteindex == 0) // <-- Only active threads
+                .Where(t => t.deleteindex == 0)
                 .Select(t => new ThreadDto
                 {
                     Id = t.Id,
@@ -35,7 +35,7 @@ namespace dev_forum_api.Controllers
                     Dislikes = t.Dislikes,
                     Tags = t.Tags,
                     Replies = t.Replies,
-                    deleteindex = t.deleteindex, // <-- Add this if not present
+                    deleteindex = t.deleteindex,
                     CreatedAt = t.CreatedAt
                 });
             return Ok(threadDtos);
@@ -74,8 +74,8 @@ namespace dev_forum_api.Controllers
                 Likes = 0,
                 Dislikes = 0,
                 Replies = 0,
-                deleteindex = 0, // <-- Ensure soft delete is set to active by default
-                CreatedAt = DateTime.UtcNow // <-- Set the creation date
+                deleteindex = 0,
+                CreatedAt = DateTime.UtcNow
             };
             var created = await _repo.AddAsync(thread);
             var threadDto = new ThreadDto
@@ -89,7 +89,7 @@ namespace dev_forum_api.Controllers
                 Dislikes = created.Dislikes,
                 Tags = created.Tags,
                 Replies = created.Replies,
-                deleteindex = created.deleteindex // <-- Add this if not present
+                deleteindex = created.deleteindex
             };
             return CreatedAtAction(nameof(GetThread), new { id = created.Id }, threadDto);
         }
@@ -105,7 +105,6 @@ namespace dev_forum_api.Controllers
             thread.UserId = dto.UserId;
             thread.Author = dto.Author;
             thread.Tags = dto.Tags;
-            // Likes, Dislikes, Replies can be updated separately if needed
 
             await _repo.UpdateAsync(thread);
             return NoContent();
@@ -118,8 +117,9 @@ namespace dev_forum_api.Controllers
             return NoContent();
         }
 
+        // SOFT DELETE: Only this endpoint remains
         [HttpPut("{id}/soft-delete")]
-        public async Task<IActionResult> SoftDeleteThread(int id, [FromBody] ThreadDto dto)
+        public async Task<IActionResult> SoftDeleteThread(int id, [FromBody] SoftDeleteDto dto)
         {
             var thread = await _repo.GetByIdAsync(id);
             if (thread == null) return NotFound();
@@ -170,17 +170,16 @@ namespace dev_forum_api.Controllers
         }
 
         [HttpPost("{threadId}/like")]
-        public async Task<IActionResult> LikeThread(int threadId, [FromBody] dynamic body)
+        public async Task<IActionResult> LikeThread(int threadId, [FromBody] UserIdDto dto)
         {
-            int userId = (int)body.userId;
-            var (likes, dislikes) = await _repo.LikeThread(threadId, userId);
+            var (likes, dislikes) = await _repo.LikeThread(threadId, dto.UserId);
             return Ok(new { likes, dislikes });
         }
 
         [HttpPost("{threadId}/dislike")]
-        public async Task<IActionResult> DislikeThread(int threadId, [FromBody] int userId)
+        public async Task<IActionResult> DislikeThread(int threadId, [FromBody] UserIdDto dto)
         {
-            var (likes, dislikes) = await _repo.DislikeThread(threadId, userId);
+            var (likes, dislikes) = await _repo.DislikeThread(threadId, dto.UserId);
             return Ok(new { likes, dislikes });
         }
     }
