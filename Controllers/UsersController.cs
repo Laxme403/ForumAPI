@@ -68,20 +68,14 @@ namespace dev_forum_api.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register([FromBody] UserRegisterDto dto)
         {
-            // Check if user already exists by email or username
+            // Check if user already exists by email and password
             var existingUser = (await _repo.GetAllAsync())
-                .FirstOrDefault(u => u.Email == dto.Email || u.Username == dto.Username);
+                .FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
 
             if (existingUser != null)
             {
-                // Return the existing user's info (or an error if you prefer)
-                var userDto = new UserDto
-                {
-                    Id = existingUser.Id,
-                    Username = existingUser.Username,
-                    Email = existingUser.Email
-                };
-                return Ok(userDto); // Or: return BadRequest("User already exists");
+                // Return 409 Conflict if user already exists with same email and password
+                return Conflict(new { message = "User already registered" });
             }
 
             // Create new user if not exists
@@ -128,10 +122,10 @@ namespace dev_forum_api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login([FromBody] UserLoginDto dto)
         {
-            var user = (await _repo.GetAllAsync())
-                .FirstOrDefault(u =>
-                    u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase) && // case-insensitive email
-                    u.Password == dto.Password); // password remains case-sensitive
+            var users = await _repo.GetAllAsync();
+            var user = users.FirstOrDefault(u =>
+                u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase) &&
+                u.Password == dto.Password);
 
             if (user == null)
                 return Unauthorized(new { message = "Invalid credentials" });

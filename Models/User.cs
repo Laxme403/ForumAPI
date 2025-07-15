@@ -12,7 +12,7 @@ namespace dev_forum_api.Models
 
         public string Password { get; set; } = string.Empty;
 
-        // Navigation properties
+        
         public List<ForumThread> Threads { get; set; } = new List<ForumThread>();
 
         public List<Reply> Replies { get; set; } = new List<Reply>();

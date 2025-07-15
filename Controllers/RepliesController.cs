@@ -18,7 +18,6 @@ namespace dev_forum_api.Controllers
             _repo = repo;
         }
 
-        // GET: api/replies
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Reply>>> GetReplies()
         {
@@ -26,7 +25,6 @@ namespace dev_forum_api.Controllers
             return Ok(replies);
         }
 
-        // Get all replies for a thread as DTOs (with author names)
         [HttpGet("thread/{threadId}")]
         public async Task<ActionResult<IEnumerable<ReplyDto>>> GetRepliesForThread(int threadId)
         {
@@ -34,7 +32,6 @@ namespace dev_forum_api.Controllers
             return Ok(replies);
         }
 
-        // GET: api/replies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Reply>> GetReply(int id)
         {
@@ -44,7 +41,6 @@ namespace dev_forum_api.Controllers
             return Ok(reply);
         }
 
-        // Add a reply
         [HttpPost]
         public async Task<ActionResult<Reply>> CreateReply([FromBody] ReplyCreateDto dto)
         {
@@ -58,7 +54,6 @@ namespace dev_forum_api.Controllers
             return CreatedAtAction(nameof(GetRepliesForThread), new { threadId = created.ThreadId }, created);
         }
 
-        // Optionally: Delete a reply
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReply(int id)
         {
