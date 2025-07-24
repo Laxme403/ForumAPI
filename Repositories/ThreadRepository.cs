@@ -40,15 +40,7 @@ namespace dev_forum_api.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
-        {
-            var thread = await _context.Threads.FindAsync(id);
-            if (thread != null)
-            {
-                _context.Threads.Remove(thread);
-                await _context.SaveChangesAsync();
-            }
-        }
+
 
         public async Task<List<ForumThread>> GetThreadsLikedByUser(int userId)
         {

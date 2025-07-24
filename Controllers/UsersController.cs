@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using dev_forum_api.Models;
 using dev_forum_api.Interfaces;
+using dev_forum_api.Services;
+using dev_forum_api.DTOs;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace dev_forum_api.Controllers
 {
@@ -12,40 +15,17 @@ namespace dev_forum_api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserRepository _repo;
+        private readonly IJwtService _jwtService;
+        private readonly AdminService _adminService;
 
-        public UsersController(IUserRepository repo)
+        public UsersController(IUserRepository repo, IJwtService jwtService, AdminService adminService)
         {
             _repo = repo;
+            _jwtService = jwtService;
+            _adminService = adminService;
         }
 
-        // GET: api/users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
-        {
-            var users = await _repo.GetAllAsync();
-            var userDtos = users.Select(u => new UserDto
-            {
-                Id = u.Id,
-                Username = u.Username,
-                Email = u.Email
-            });
-            return Ok(userDtos);
-        }
 
-        // GET: api/users/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetUser(int id)
-        {
-            var user = await _repo.GetByIdAsync(id);
-            if (user == null) return NotFound();
-            var userDto = new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email
-            };
-            return Ok(userDto);
-        }
 
         // GET: api/users/by-username/{username}
         [HttpGet("by-username/{username}")]
@@ -59,14 +39,15 @@ namespace dev_forum_api.Controllers
             {
                 Id = user.Id,
                 Username = user.Username,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
             return Ok(userDto);
         }
 
         // POST: api/users/register
         [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register([FromBody] UserRegisterDto dto)
+        public async Task<ActionResult<LoginResponseDto>> Register([FromBody] UserRegisterDto dto)
         {
             // Check if user already exists by email and password
             var existingUser = (await _repo.GetAllAsync())
@@ -83,44 +64,36 @@ namespace dev_forum_api.Controllers
             {
                 Username = dto.Username,
                 Email = dto.Email,
-                Password = dto.Password // You should hash this in production!
+                Password = dto.Password, // You should hash this in production!
+                Role = AdminService.GetRoleForEmail(dto.Email) // Automatically assign role based on email
             };
             var created = await _repo.AddAsync(user);
-            var createdDto = new UserDto
+            
+            // Generate JWT token
+            var token = _jwtService.GenerateToken(created);
+            
+            var userDto = new UserDto
             {
                 Id = created.Id,
                 Username = created.Username,
-                Email = created.Email
+                Email = created.Email,
+                Role = created.Role
             };
-            return CreatedAtAction(nameof(GetUser), new { id = created.Id }, createdDto);
+            
+            var response = new LoginResponseDto
+            {
+                Token = token,
+                User = userDto
+            };
+            
+            return CreatedAtAction(nameof(GetUserByUsername), new { username = created.Username }, response);
         }
 
-        // PUT: api/users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, UserRegisterDto dto)
-        {
-            var user = await _repo.GetByIdAsync(id);
-            if (user == null) return NotFound();
 
-            user.Username = dto.Username;
-            user.Email = dto.Email;
-            user.Password = dto.Password;
-
-            await _repo.UpdateAsync(user);
-            return NoContent();
-        }
-
-        // DELETE: api/users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            await _repo.DeleteAsync(id);
-            return NoContent();
-        }
 
         // POST: api/users/login
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login([FromBody] UserLoginDto dto)
+        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] UserLoginDto dto)
         {
             var users = await _repo.GetAllAsync();
             var user = users.FirstOrDefault(u =>
@@ -130,13 +103,24 @@ namespace dev_forum_api.Controllers
             if (user == null)
                 return Unauthorized(new { message = "Invalid credentials" });
 
+            // Generate JWT token
+            var token = _jwtService.GenerateToken(user);
+
             var userDto = new UserDto
             {
                 Id = user.Id,
                 Username = user.Username,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
-            return Ok(userDto);
+
+            var response = new LoginResponseDto
+            {
+                Token = token,
+                User = userDto
+            };
+
+            return Ok(response);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using dev_forum_api.Interfaces;
 using dev_forum_api.DTOs;
 using dev_forum_api.Models;
@@ -32,16 +33,9 @@ namespace dev_forum_api.Controllers
             return Ok(replies);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Reply>> GetReply(int id)
-        {
-            var replies = await _repo.GetAllAsync();
-            var reply = replies.FirstOrDefault(r => r.Id == id);
-            if (reply == null) return NotFound();
-            return Ok(reply);
-        }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Reply>> CreateReply([FromBody] ReplyCreateDto dto)
         {
             var reply = new Reply
@@ -54,11 +48,6 @@ namespace dev_forum_api.Controllers
             return CreatedAtAction(nameof(GetRepliesForThread), new { threadId = created.ThreadId }, created);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteReply(int id)
-        {
-            await _repo.DeleteAsync(id);
-            return NoContent();
-        }
+       
     }
 }

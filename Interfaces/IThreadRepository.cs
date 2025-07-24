@@ -9,10 +9,9 @@ namespace dev_forum_api.Interfaces
         Task<IEnumerable<ForumThread>> GetAllAsync();
         Task<ForumThread> GetByIdAsync(int id);
         Task<ForumThread> AddAsync(ForumThread thread);
-        Task UpdateAsync(ForumThread thread);
-        Task DeleteAsync(int id);
+        Task UpdateAsync(ForumThread thread); // Keep this for soft delete
 
-        // Add these methods:
+        // Like/Dislike functionality
         Task<List<ForumThread>> GetThreadsLikedByUser(int userId);
         Task<List<ForumThread>> GetThreadsDislikedByUser(int userId);
         Task<(int likes, int dislikes)> LikeThread(int threadId, int userId);

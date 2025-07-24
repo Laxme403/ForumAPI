@@ -113,3 +113,11 @@ C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\refint\dev-forum-api.d
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.pdb
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\dev-forum-api.genruntimeconfig.cache
 C:\Users\Magic\Desktop\APP\dev-forum-api\obj\Debug\net8.0\ref\dev-forum-api.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Magic\Desktop\APP\dev-forum-api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll

@@ -12,6 +12,7 @@ namespace dev_forum_api.Models
 
         public string Password { get; set; } = string.Empty;
 
+        public string Role { get; set; } = "User"; // Default to "User", only backend can set "Admin"
         
         public List<ForumThread> Threads { get; set; } = new List<ForumThread>();
 

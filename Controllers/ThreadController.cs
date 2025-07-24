@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using dev_forum_api.Models;
 using dev_forum_api.Interfaces;
 using System.Collections.Generic;
@@ -62,6 +63,7 @@ namespace dev_forum_api.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ThreadDto>> CreateThread([FromBody] ThreadCreateDto dto)
         {
             var thread = new ForumThread
@@ -94,31 +96,11 @@ namespace dev_forum_api.Controllers
             return CreatedAtAction(nameof(GetThread), new { id = created.Id }, threadDto);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateThread(int id, ThreadCreateDto dto)
-        {
-            var thread = await _repo.GetByIdAsync(id);
-            if (thread == null) return NotFound();
 
-            thread.Title = dto.Title;
-            thread.Description = dto.Description;
-            thread.UserId = dto.UserId;
-            thread.Author = dto.Author;
-            thread.Tags = dto.Tags;
-
-            await _repo.UpdateAsync(thread);
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteThread(int id)
-        {
-            await _repo.DeleteAsync(id);
-            return NoContent();
-        }
 
         // SOFT DELETE: Only this endpoint remains
         [HttpPut("{id}/soft-delete")]
+        [Authorize]
         public async Task<IActionResult> SoftDeleteThread(int id, [FromBody] SoftDeleteDto dto)
         {
             var thread = await _repo.GetByIdAsync(id);
@@ -170,6 +152,7 @@ namespace dev_forum_api.Controllers
         }
 
         [HttpPost("{threadId}/like")]
+        [Authorize]
         public async Task<IActionResult> LikeThread(int threadId, [FromBody] UserIdDto dto)
         {
             var (likes, dislikes) = await _repo.LikeThread(threadId, dto.UserId);
@@ -177,6 +160,7 @@ namespace dev_forum_api.Controllers
         }
 
         [HttpPost("{threadId}/dislike")]
+        [Authorize]
         public async Task<IActionResult> DislikeThread(int threadId, [FromBody] UserIdDto dto)
         {
             var (likes, dislikes) = await _repo.DislikeThread(threadId, dto.UserId);
